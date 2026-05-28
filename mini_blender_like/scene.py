@@ -12,25 +12,20 @@ def clamp01(x: float) -> float:
 class Material:
     name: str = "mat"
     base_color: Tuple[float, float, float] = (0.2, 0.6, 0.95)
-    texture_path: Optional[str] = None  # for "variant 1" we keep it as metadata
+    texture_path: Optional[str] = None
 
 
 @dataclass
 class Object3D:
     name: str
-    kind: str  # sphere, box, plane, mesh_obj
+    kind: str
     transform: Dict[str, Any] = field(default_factory=dict)
     material: Material = field(default_factory=Material)
 
-    # SDF primitive parameters (for ray marching)
-    # sphere: center, radius
-    # box: center, half_size
-    # plane: normal, h (dot(p,n)+h=0)
     sdf_params: Dict[str, Any] = field(default_factory=dict)
 
-    # Mesh data (for viewport display; for obj import)
-    vertices: Optional[np.ndarray] = None  # (N,3)
-    faces: Optional[np.ndarray] = None     # (M,3) indices
+    vertices: Optional[np.ndarray] = None
+    faces: Optional[np.ndarray] = None
 
 
 @dataclass
