@@ -23,20 +23,17 @@ from .renderer_sdf import RenderConfig, render
 from .viewports import project_points_ortho
 
 
-# -----------------------------
 # Theme palette (soft "Blender-like")
-# -----------------------------
+
 BG = "#2b2b2b"          # main background
-PANEL = "#303030"       # panel background (ttk uses style; for tk widgets use directly)
+PANEL = "#303030"       # panel background
 FIELD = "#3a3a3a"       # entry/list background
 FG = "#e6e6e6"          # text
 ACCENT = "#3a79ff"      # selection accent
-MPL_BG = "#2f2f2f"      # matplotlib figure bg (close to panels)
+MPL_BG = "#2f2f2f"      # matplotlib figure bg
 
 
-# -----------------------------
 # Helpers
-# -----------------------------
 def ensure_dir(p: str):
     os.makedirs(p, exist_ok=True)
 
@@ -152,15 +149,11 @@ def _fit_camera_for_scene(scene: Scene, yaw_deg: float, pitch_deg: float) -> Tup
     max_dist = dist + radius * 3.0
     return (float(cam[0]), float(cam[1]), float(cam[2])), (float(target[0]), float(target[1]), float(target[2])), float(max_dist)
 
-
-# ----------------------------
 # Scrollable frame helper
-# ----------------------------
 class ScrollableFrame(ttk.Frame):
     def __init__(self, parent, width=480, bg=BG, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        # IMPORTANT: use explicit bg to avoid ttk background issues
         self.canvas = tk.Canvas(self, borderwidth=0, highlightthickness=0, width=width, bg=bg)
         self.vsb = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.inner = ttk.Frame(self.canvas)
@@ -195,9 +188,8 @@ class ScrollableFrame(ttk.Frame):
             self.canvas.yview_scroll(1, "units")
 
 
-# ----------------------------
+
 # App
-# ----------------------------
 class MiniBlenderLike(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -215,7 +207,7 @@ class MiniBlenderLike(tk.Tk):
         self.out_dir = tk.StringVar(value=os.path.abspath("outputs"))
         self.viewport_mode = tk.StringVar(value="3D")
 
-        # Camera (viewport)
+        # Viewport
         self.cam_yaw = tk.DoubleVar(value=-60.0)
         self.cam_pitch = tk.DoubleVar(value=20.0)
         self.cam_dist = tk.DoubleVar(value=10.0)
@@ -291,7 +283,7 @@ class MiniBlenderLike(tk.Tk):
         self.canvas.mpl_connect("motion_notify_event", self._on_mpl_motion)
         self.canvas.mpl_connect("button_release_event", self._on_mpl_release)
 
-    # ------------------ Theme ------------------
+    #Theme 
     def _apply_theme(self):
         self.configure(bg=BG)
         style = ttk.Style(self)
@@ -310,7 +302,6 @@ class MiniBlenderLike(tk.Tk):
         style.configure("TSpinbox", fieldbackground=FIELD, foreground=FG)
         style.map("TButton", background=[("active", "#3a3a3a")])
 
-        # Matplotlib defaults for dark-ish viewport
         plt.rcParams["figure.facecolor"] = MPL_BG
         plt.rcParams["axes.facecolor"] = MPL_BG
         plt.rcParams["axes.labelcolor"] = FG
@@ -319,7 +310,7 @@ class MiniBlenderLike(tk.Tk):
         plt.rcParams["ytick.color"] = "#cfcfcf"
         plt.rcParams["grid.color"] = "#555555"
 
-    # ------------------ Seed scene ------------------
+    #Seed scene
     def _seed_scene(self):
         self.scene.clear()
         self.scene.add(Object3D(
@@ -341,12 +332,12 @@ class MiniBlenderLike(tk.Tk):
             sdf_params={"normal": (0.0, 1.0, 0.0), "h": 1.45},
         ))
 
-    # ------------------ UI ------------------
+    #UI
     def _build_ui(self):
         root = ttk.Frame(self, padding=10)
         root.pack(fill="both", expand=True)
 
-        # Toolbar
+        #Toolbar
         toolbar = ttk.Frame(root)
         toolbar.pack(fill="x", pady=(0, 10))
 
@@ -374,7 +365,7 @@ class MiniBlenderLike(tk.Tk):
 
         ttk.Label(toolbar, textvariable=self.status, anchor="e").pack(side="right", fill="x", expand=True)
 
-        # Body
+        #Body
         body = ttk.Frame(root)
         body.pack(fill="both", expand=True)
 
@@ -385,7 +376,7 @@ class MiniBlenderLike(tk.Tk):
         right = ttk.Frame(body)
         right.pack(side="right", fill="both", expand=True, padx=(10, 0))
 
-        # Viewport
+        #Viewport
         pane = ttk.LabelFrame(right, text="Окно просмотра", padding=8)
         pane.pack(fill="both", expand=True)
 
@@ -395,7 +386,7 @@ class MiniBlenderLike(tk.Tk):
         w.configure(bg=BG, highlightthickness=0)
         w.pack(fill="both", expand=True)
 
-        # Help
+        #Help
         help_box = ttk.LabelFrame(left, text="Справка", padding=10)
         help_box.pack(fill="x", pady=6)
         ttk.Label(
@@ -412,12 +403,12 @@ class MiniBlenderLike(tk.Tk):
             wraplength=530
         ).pack(anchor="w")
 
-        # Output folder
+        #Output folder
         io = ttk.LabelFrame(left, text="Вывод", padding=10)
         io.pack(fill="x", pady=6)
         self._path_row(io, "Папка:", self.out_dir, self.choose_out_dir)
 
-        # Camera
+        #Camera
         cam = ttk.LabelFrame(left, text="Камера", padding=10)
         cam.pack(fill="x", pady=6)
         self._spin(cam, "Азимут", self.cam_yaw, -180, 180, 5)
@@ -426,7 +417,7 @@ class MiniBlenderLike(tk.Tk):
         ttk.Checkbutton(cam, text="Показывать оси", variable=self.show_axes, command=self.draw_viewport).pack(anchor="w", pady=4)
         ttk.Button(cam, text="Применить камеру", command=self.draw_viewport).pack(fill="x")
 
-        # Scene list
+        #Scene list
         sl = ttk.LabelFrame(left, text="Сцена", padding=10)
         sl.pack(fill="both", expand=True, pady=6)
 
@@ -445,7 +436,7 @@ class MiniBlenderLike(tk.Tk):
         ttk.Button(rowb, text="Удалить", command=self.delete_selected).pack(side="left", fill="x", expand=True)
         ttk.Button(rowb, text="Дублировать", command=self.duplicate_selected).pack(side="left", fill="x", expand=True, padx=6)
 
-        # Add panel
+        #Add panel
         add = ttk.LabelFrame(left, text="Добавить", padding=10)
         add.pack(fill="x", pady=6)
 
@@ -474,7 +465,7 @@ class MiniBlenderLike(tk.Tk):
 
         ttk.Button(add, text="Добавить объект", command=self.add_object).pack(fill="x", pady=6)
 
-        # Edit selected
+        #Edit selected
         edit = ttk.LabelFrame(left, text="Редактирование", padding=10)
         edit.pack(fill="x", pady=6)
 
@@ -517,7 +508,7 @@ class MiniBlenderLike(tk.Tk):
         self._spin(ren, "Yaw", self.r_yaw, -180, 180, 5)
         self._spin(ren, "Pitch", self.r_pitch, -89, 89, 2)
 
-    # ------------------ Toolbar actions ------------------
+    #Toolbar actions
     def _on_new_scene(self):
         if messagebox.askyesno("Новая сцена", "Сбросить сцену к состоянию по умолчанию?"):
             self._seed_scene()
@@ -527,7 +518,7 @@ class MiniBlenderLike(tk.Tk):
             self.draw_viewport()
             self.status.set("Сцена создана заново.")
 
-    # ------------------ UI helpers ------------------
+    #UI helpers
     def _path_row(self, parent, label, var, choose_cmd):
         row = ttk.Frame(parent)
         row.pack(fill="x", pady=4)
@@ -550,7 +541,7 @@ class MiniBlenderLike(tk.Tk):
     def _sync_color_button(self, btn: ttk.Button, hex_color: str):
         btn.configure(text=f"Выбрать ({hex_color})")
 
-    # ------------------ Files ------------------
+    #Files
     def choose_out_dir(self):
         d = filedialog.askdirectory(title="Выберите папку вывода")
         if d:
@@ -585,7 +576,7 @@ class MiniBlenderLike(tk.Tk):
         if p:
             self.edit_tex_path.set(p)
 
-    # ------------------ Scene list ------------------
+    #Scene list
     def _refresh_object_list(self):
         self.listbox.delete(0, tk.END)
         for i, o in enumerate(self.scene.objects):
@@ -632,7 +623,7 @@ class MiniBlenderLike(tk.Tk):
         df.to_csv(path, index=False)
         self.status.set("CSV экспортирован.")
 
-    # ------------------ Camera ------------------
+    #Camera
     def focus_scene(self):
         mn, mx = _scene_bounds(self.scene)
         radius = float(np.linalg.norm(mx - mn) * 0.5 + 1e-6)
@@ -641,7 +632,7 @@ class MiniBlenderLike(tk.Tk):
         self.draw_viewport()
         self.status.set("Фокус на сцену.")
 
-    # ------------------ Add object ------------------
+    #Add object
     def _refresh_add_form(self):
         for w in self.add_form.winfo_children():
             w.destroy()
@@ -794,7 +785,7 @@ class MiniBlenderLike(tk.Tk):
         self.draw_viewport()
         self.status.set("OBJ импортирован.")
 
-    # ------------------ Edit selected ------------------
+    #Edit selected
     def pick_edit_color(self):
         col = colorchooser.askcolor(title="Выберите цвет")
         if not col or not col[1]:
@@ -926,7 +917,7 @@ class MiniBlenderLike(tk.Tk):
         self.draw_viewport()
         self.status.set("Применено.")
 
-    # ------------------ Render ------------------
+    #Render
     def render_clicked(self):
         ensure_dir(self.out_dir.get())
         cam_pos, cam_target, max_dist = _fit_camera_for_scene(self.scene, yaw_deg=float(self.r_yaw.get()), pitch_deg=float(self.r_pitch.get()))
@@ -968,7 +959,7 @@ class MiniBlenderLike(tk.Tk):
         plt.imsave(path, np.clip(self._last_render_img, 0.0, 1.0))
         self.status.set("PNG сохранён.")
 
-    # ------------------ Viewport draw ------------------
+    #Viewport draw
     def _reset_axes(self):
         self.fig.clear()
         if self.viewport_mode.get() == "3D":
@@ -1091,7 +1082,7 @@ class MiniBlenderLike(tk.Tk):
         ax.set_aspect("equal", adjustable="box")
         ax.autoscale_view()
 
-    # ------------------ Mpl interactions ------------------
+    #Mpl interactions
     def _on_mpl_scroll(self, event):
         mode = self.viewport_mode.get()
         step = getattr(event, "step", None)
@@ -1295,7 +1286,7 @@ class MiniBlenderLike(tk.Tk):
         elif o.kind == "mesh_obj" and o.vertices is not None:
             o.vertices = o.vertices + np.array([dx, dy, dz], dtype=np.float64)
 
-    # ------------------ 3D plot helpers ------------------
+    #3D plot helpers
     def _plot_sphere(self, ax, o: Object3D):
         c = np.array(o.sdf_params["center"], dtype=np.float64)
         r = float(o.sdf_params["radius"])
@@ -1411,7 +1402,7 @@ class MiniBlenderLike(tk.Tk):
         ax.set_ylim(c[1] - r, c[1] + r)
         ax.set_zlim(c[2] - r, c[2] + r)
 
-    # ------------------ Render preview ------------------
+    # Render preview
     def _draw_image(self, img: np.ndarray):
         self.fig.clear()
         ax = self.fig.add_subplot(111)
