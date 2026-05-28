@@ -5,11 +5,11 @@ import numpy as np
 
 def load_obj(path: str) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Very small OBJ loader:
-      - supports 'v x y z'
-      - supports 'f i j k' or 'f i/.. j/.. k/..' (triangles)
-      - ignores quads and other features (can be triangulated externally)
-    Returns (vertices Nx3, faces Mx3 int32 0-based)
+    Компактный загрузчик OBJ:
+      - поддерживает строки 'v x y z'
+      - поддерживает 'f i j k' или 'f i/.. j/.. k/..' (только треугольники)
+      - игнорирует четырёхугольники и прочие элементы (их можно триангулировать внешними средствами)
+    Возвращает: (вершины — массив Nx3, грани — массив Mx3 типа int32, индексация с нуля)
     """
     verts: List[List[float]] = []
     faces: List[List[int]] = []
@@ -26,11 +26,9 @@ def load_obj(path: str) -> Tuple[np.ndarray, np.ndarray]:
             elif line.startswith("f "):
                 parts = line.split()[1:]
                 if len(parts) != 3:
-                    # keep it simple: only triangles
                     continue
                 idxs = []
                 for p in parts:
-                    # handle i / i/t / i/t/n
                     token = p.split("/")[0]
                     if token:
                         idxs.append(int(token) - 1)
