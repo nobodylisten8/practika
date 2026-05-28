@@ -6,8 +6,8 @@ import numpy as np
 
 @dataclass
 class OrbitCamera:
-    yaw: float = 35.0    # degrees
-    pitch: float = -20.0 # degrees
+    yaw: float = 35.0
+    pitch: float = -20.0
     dist: float = 6.0
     target: Tuple[float, float, float] = (0.0, 0.0, 0.0)
 
@@ -18,7 +18,6 @@ class OrbitCamera:
         cy, sy = np.cos(yaw), np.sin(yaw)
         cp, sp = np.cos(pitch), np.sin(pitch)
 
-        # yaw around Y, pitch around X
         Ry = np.array([[cy, 0, sy],
                        [0,  1, 0 ],
                        [-sy,0, cy]],
@@ -30,13 +29,11 @@ class OrbitCamera:
 
     def position(self) -> np.ndarray:
         R = self.rotation_matrix()
-        # camera in local space at (0,0,dist) looking at origin
         local = np.array([0.0, 0.0, self.dist], dtype=np.float64)
         pos = np.array(self.target, dtype=np.float64) + (R @ local)
         return pos
 
     def view_matrix(self) -> np.ndarray:
-        # simple look-at to target
         eye = self.position()
         target = np.array(self.target, dtype=np.float64)
         up = np.array([0.0, 1.0, 0.0], dtype=np.float64)
@@ -47,7 +44,6 @@ class OrbitCamera:
         r = r / (np.linalg.norm(r) + 1e-12)
         u = np.cross(r, f)
 
-        # view matrix (3x4)
         M = np.eye(4, dtype=np.float64)
         M[0, :3] = r
         M[1, :3] = u
@@ -64,9 +60,8 @@ def project_points_perspective(P: np.ndarray, cam: OrbitCamera,
     V = cam.view_matrix()
     N = P.shape[0]
     Ph = np.concatenate([P, np.ones((N, 1), dtype=np.float64)], axis=1)
-    Pc = (V @ Ph.T).T[:, :3]  # camera space
+    Pc = (V @ Ph.T).T[:, :3]
 
-    # perspective
     fov = np.deg2rad(fov_deg)
     f = 1.0 / np.tan(fov / 2.0)
     x = (Pc[:, 0] * f / aspect) / (-Pc[:, 2] + 1e-12)
