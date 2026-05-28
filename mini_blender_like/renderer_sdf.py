@@ -20,23 +20,19 @@ class RenderConfig:
     max_dist: float = 25.0
     eps: float = 1e-3
 
-    #Camera
     camera_pos: Tuple[float, float, float] = (0.0, 0.0, 4.0)
     camera_target: Tuple[float, float, float] = (0.0, 0.0, 0.0)
     camera_up: Tuple[float, float, float] = (0.0, 1.0, 0.0)
 
-    #Lighting/background
     bg: float = 0.08
     light_dir: Tuple[float, float, float] = (0.4, 0.7, -0.6)
 
 
-#SDF primitives
 def sdf_sphere(p: np.ndarray, c: np.ndarray, r: float) -> np.ndarray:
     return np.linalg.norm(p - c, axis=-1) - r
 
 
 def sdf_plane(p: np.ndarray, n: np.ndarray, h: float) -> np.ndarray:
-    #plane: dot(p, n) + h = 0
     n = n / (np.linalg.norm(n) + 1e-12)
     return np.sum(p * n, axis=-1) + h
 
@@ -66,7 +62,6 @@ def sdf_torus_y(p: np.ndarray, c: np.ndarray, R: float, r: float) -> np.ndarray:
     return np.sqrt(q*q + y*y) - r
 
 
-# Scene SDF composition
 def scene_sdf_and_color(scene: Scene):
     objs = [o for o in scene.objects if o.kind in ("sphere", "box", "plane", "cylinder", "torus")]
 
@@ -141,7 +136,6 @@ def estimate_normal_scene(p: np.ndarray, sdf_only, eps: float) -> np.ndarray:
     return n / n_norm
 
 
-# Background helpers
 def load_background_via_matplotlib(path: str) -> np.ndarray:
     import matplotlib.pyplot as plt
     img = plt.imread(path)
@@ -162,7 +156,6 @@ def resize_nearest(bg: np.ndarray, H: int, W: int) -> np.ndarray:
     return bg[y_idx][:, x_idx]
 
 
-# Camera helpers (look-at)
 def _camera_basis(eye: np.ndarray, target: np.ndarray, up: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Returns (right, up2, forward) unit vectors for a look-at camera.
@@ -180,7 +173,6 @@ def _camera_basis(eye: np.ndarray, target: np.ndarray, up: np.ndarray) -> Tuple[
     return r, u, f
 
 
-# Render
 def render(scene: Scene, cfg: RenderConfig,
            out_dir: Optional[str] = None,
            save_prefix: str = "render") -> tuple[np.ndarray, Dict[str, Any]]:
@@ -206,12 +198,10 @@ def render(scene: Scene, cfg: RenderConfig,
         except Exception:
             bg_img = None
 
-    # Rays in camera space: build directions for each pixel in world space
     ys, xs = np.mgrid[0:H, 0:W]
     x = (2 * (xs + 0.5) / W - 1) * np.tan(fov / 2) * aspect
     y = (1 - 2 * (ys + 0.5) / H) * np.tan(fov / 2)
 
-    # dir = normalize(forward + x*right + y*up2)
     dirs = (forward[None, None, :] + x[..., None] * right[None, None, :] + y[..., None] * up2[None, None, :])
     dirs = dirs / (np.linalg.norm(dirs, axis=-1, keepdims=True) + 1e-12)
 
@@ -235,13 +225,11 @@ def render(scene: Scene, cfg: RenderConfig,
         hit = np.where(too_far, False, hit)
         oid = np.where(too_far, -1, oid)
 
-    #Background base
     if bg_img is not None:
         img = resize_nearest(bg_img, H, W).copy()
     else:
         img = np.full((H, W, 3), cfg.bg, dtype=np.float64)
 
-    #Shade hits
     if np.any(hit) and sdf_object_count > 0:
         p_hit = cam + dirs[hit] * t[hit, None]
         n = estimate_normal_scene(p_hit, sdf_only, cfg.eps)
